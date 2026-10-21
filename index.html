@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laser Marking Viewer</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<header>
+  <div class="brand">Camera-guided laser marking <span>simulation viewer</span><small>Simulated patients. Every frame was processed by the networks beforehand; this page replays the results. Custom lines are mapped onto the skin in your browser.</small></div>
+  <div id="patients" class="patients"></div>
+</header>
+
+<main>
+  <section class="viewer">
+    <div id="three"></div>
+    <div class="overlay-controls">
+      <label title="The line from the designer below: the network's plan unless you change it. Green: the laser draws it; grey dashed: laser off."><input type="checkbox" id="t-line" checked> laser line</label>
+      <label><input type="checkbox" id="t-fan" checked> laser fan</label>
+      <label title="Green box: where the lower abdomen must be (orange when the patient is outside). Grey ring: the floor mark."><input type="checkbox" id="t-zone" checked> working zone &amp; floor mark</label>
+      <label><input type="checkbox" id="t-pred" checked> predicted skeleton</label>
+      <label title="The simulation's true skeleton, with the bone names"><input type="checkbox" id="t-true"> true skeleton + bone labels</label>
+      <label><input type="checkbox" id="t-lmlabels"> landmark labels</label>
+      <label><input type="checkbox" id="t-designs"> 5 design candidates</label>
+      <label class="slider">body opacity <input type="range" id="opacity" min="0.05" max="1" step="0.05" value="0.55"></label>
+      <div id="legend" class="legend" hidden></div>
+    </div>
+    <div class="motion">
+      <button id="play">&#9654; Tracking loop</button>
+      <label class="slider">sideways <input type="range" id="posx" min="0" max="2" step="1" value="1"></label>
+      <label class="slider">forward / back <input type="range" id="posy" min="0" max="3" step="1" value="1"></label>
+      <span id="posval"></span>
+      <span id="timing" class="muted"></span>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="cams">
+      <figure>
+        <figcaption>Close-up camera <span class="muted">(laser drawing the planned line)</span></figcaption>
+        <canvas id="cu" width="512" height="512"></canvas>
+        <div class="row small">
+          <label title="The network's plan: the path-traced laser. A changed line: drawn on the camera image."><input type="checkbox" id="c-laser" checked> laser line</label>
+          <label title="Yellow: the network's line points. White circles: the 9 spline points fitted to them."><input type="checkbox" id="c-guides"> network points</label>
+          <label><input type="checkbox" id="c-parts"> body parts</label>
+          <label><input type="checkbox" id="c-lm" checked> landmarks</label>
+          <label><input type="checkbox" id="c-designs"> 5 designs</label>
+          <label title="The fold under the apron found by the network (turquoise, dashed)"><input type="checkbox" id="c-crease"> apron crease</label>
+          <label><input type="checkbox" id="c-raw"> camera only</label>
+        </div>
+      </figure>
+      <figure>
+        <figcaption>Whole-body camera <span class="muted">(skeleton network)</span></figcaption>
+        <canvas id="wb" width="512" height="512"></canvas>
+      </figure>
+    </div>
+    <div id="report" class="report"></div>
+  </aside>
+</main>
+
+<section class="editor">
+  <div class="editor-head">
+    <h2>Line designer <span class="muted" id="npts"></span></h2>
+    <p class="muted">Anatomical frame of this patient: 0 = commissure, &plusmn;1 = the anterior superior iliac spines,
+      height in cm above the commissure. The laser draws the line shown here: the network's plan (a smooth spline
+      through 9 points fitted to the network's line) unless you change it. Hover a button to preview a design;
+      click to load it. Click to add a point, drag to move, double-click to delete.</p>
+  </div>
+  <div class="editor-body">
+    <svg id="spline" viewBox="0 0 900 360"></svg>
+    <div class="editor-ctl">
+      <div class="row">Start from:
+        <span id="starts"></span>
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="mirror" checked> mirror left/right</label>
+        <label><input type="checkbox" id="live" checked> apply live</label>
+      </div>
+      <label class="slider">shift sideways <input type="range" id="sx" min="-6" max="6" step="0.1" value="0"> <span id="sxv">0.0 cm</span></label>
+      <label class="slider">shift up/down <input type="range" id="sz" min="-4" max="4" step="0.1" value="0"> <span id="szv">0.0 cm</span></label>
+      <div class="row">
+        <button id="apply">Apply to patient</button>
+        <button id="reset">Reset</button>
+        <button id="clear">Clear</button>
+      </div>
+      <div class="row">
+        <input id="tname" placeholder="template name">
+        <button id="save">Save template</button>
+        <select id="tlist"><option value="">load template…</option></select>
+      </div>
+      <div id="custominfo" class="muted"></div>
+    </div>
+  </div>
+</section>
+
+<script>window.STATIC_ROOT = "data/";</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
